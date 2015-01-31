@@ -11,24 +11,6 @@ var (
 	err         error
 )
 
-type Option struct {
-	collection string
-}
-
-type CollectionSet struct {
-	liked          string
-	disliked       string
-	userSimilarity string
-	itemSimilarity string
-	temp           string
-	tempDiff       string
-	userRecommend  string
-}
-
-func (o *Option) SetCollection(name string) {
-	o.collection = name
-}
-
 func init() {
 	if localStartup == true {
 		redisClient, err = redis.Dial("tcp", localRedisURL+":"+localRedisPort)

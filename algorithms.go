@@ -10,6 +10,6 @@ package gocommend
 //	redisClient.Do
 //}
 
-func EchoCollection() {
+//func EchoCollection() {
 
-}
+//}
