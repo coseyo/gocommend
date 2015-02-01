@@ -1,36 +1,59 @@
 package gocommend
 
 type collectionSet struct {
-	mostLiked       string
-	mostDisliked    string
-	userLiked       string
-	itemLiked       string
-	userDisliked    string
-	itemDisliked    string
-	userSimilarity  string
-	itemSimilarity  string
-	userTemp        string
-	itemTemp        string
-	userTempDiff    string
-	itemTempDiff    string
-	recommendedItem string
+	collectionPrefix string
+	scoreBoard       string
+	mostLiked        string
+	mostDisliked     string
 }
 
-func initSet(i *Input) (*collectionSet, error) {
-	c := new(collectionSet)
-	c.mostLiked = i.Collection + ":mostLiked"
-	c.mostDisliked = i.Collection + ":mostDisliked"
-	c.userLiked = i.Collection + ":" + i.UserId + ":" + "userLiked"
-	c.itemLiked = i.Collection + ":" + i.ItemId + ":" + "itemLiked"
-	c.userDisliked = i.Collection + ":" + i.UserId + ":" + "userDisliked"
-	c.itemDisliked = i.Collection + ":" + i.ItemId + ":" + "itemDisliked"
-	c.userSimilarity = i.Collection + ":" + i.UserId + ":" + "userSimilarity"
-	c.itemSimilarity = i.Collection + ":" + i.ItemId + ":" + "itemSimilarity"
-	c.userTemp = i.Collection + ":" + i.UserId + ":" + "userTemp"
-	c.itemTemp = i.Collection + ":" + i.ItemId + ":" + "itemTemp"
-	c.userTempDiff = i.Collection + ":" + i.UserId + ":" + "userTempDiff"
-	c.itemTempDiff = i.Collection + ":" + i.UserId + ":" + "itemTempDiff"
-	c.recommendedItem = i.Collection + ":" + i.UserId + ":" + "recommendedItem"
+func (c *collectionSet) init(collection string) {
+	c.collectionPrefix = collection
+	c.scoreBoard = c.collectionPrefix + ":scoreBoard"
+	c.mostLiked = c.collectionPrefix + ":mostLiked"
+	c.mostDisliked = c.collectionPrefix + ":mostDisliked"
+}
 
-	return c, nil
+func (c *collectionSet) userLiked(userId string) string {
+	return c.collectionPrefix + ":" + userId + ":" + "userLiked"
+}
+
+func (c *collectionSet) itemLiked(itemId string) string {
+	return c.collectionPrefix + ":" + itemId + ":" + "itemLiked"
+}
+
+func (c *collectionSet) userDisliked(userId string) string {
+	return c.collectionPrefix + ":" + userId + ":" + "userDisliked"
+}
+
+func (c *collectionSet) itemDisliked(itemId string) string {
+	return c.collectionPrefix + ":" + itemId + ":" + "itemDisliked"
+}
+
+func (c *collectionSet) userSimilarity(userId string) string {
+	return c.collectionPrefix + ":" + userId + ":" + "userSimilarity"
+}
+
+func (c *collectionSet) itemSimilarity(itemId string) string {
+	return c.collectionPrefix + ":" + itemId + ":" + "itemSimilarity"
+}
+
+func (c *collectionSet) userTemp(userId string) string {
+	return c.collectionPrefix + ":" + userId + ":" + "userTemp"
+}
+
+func (c *collectionSet) itemTemp(itemId string) string {
+	return c.collectionPrefix + ":" + itemId + ":" + "itemTemp"
+}
+
+func (c *collectionSet) userTempDiff(userId string) string {
+	return c.collectionPrefix + ":" + userId + ":" + "userTempDiff"
+}
+
+func (c *collectionSet) itemTempDiff(userId string) string {
+	return c.collectionPrefix + ":" + userId + ":" + "itemTempDiff"
+}
+
+func (c *collectionSet) recommendedItem(userId string) string {
+	return c.collectionPrefix + ":" + userId + ":" + "recommendedItem"
 }
