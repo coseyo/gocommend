@@ -3,7 +3,7 @@ package gocommend
 const (
 	//nearestNeighbors = 5
 
-	localRedisURL = "192.168.1.6"
+	localRedisURL = "192.168.1.5"
 
 	localRedisPort = "6379"
 
