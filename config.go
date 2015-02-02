@@ -1,7 +1,9 @@
 package gocommend
 
 const (
-	//nearestNeighbors = 5
+	MAX_NEIGHBORS = 10
+
+	MAX_RECOMMEND_ITEM = 30
 
 	localRedisURL = "192.168.1.5"
 

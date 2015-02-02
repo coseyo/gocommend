@@ -101,4 +101,62 @@ func (algo *algorithms) willsonScore(total int, pOS float64) float64 {
 	return math.Abs((pOS + z*z/(2*n) - z*math.Sqrt(pOS*(1-pOS)+z*z/(4*n))) / (1 + z*z/n))
 }
 
-//func (algo *glgorithums)
+func (algo *algorithms) updateRecommendationFor(userId string) error {
+
+	mostSimilarUserIds, err := redis.Values(redisClient.Do("ZREVRANGE", algo.cSet.userSimilarity(userId), 0, MAX_NEIGHBORS-1))
+
+	if len(mostSimilarUserIds) == 0 {
+		return err
+	}
+
+	for _, rs := range mostSimilarUserIds {
+		similarUserId, _ := redis.String(rs, err)
+		redisClient.Do("SUNIONSTORE", algo.cSet.userTemp(userId), algo.cSet.userLiked(similarUserId))
+	}
+
+	diffItemIds, err := redis.Values(redisClient.Do("SDIFF", algo.cSet.userLiked(userId), algo.cSet.userDisliked(userId)))
+
+	for _, rs := range diffItemIds {
+		diffItemId, _ := redis.String(rs, err)
+		score := algo.predictFor(userId, diffItemId)
+		redisClient.Do("ZADD", algo.cSet.recommendedItem(userId), score, userId)
+	}
+
+	recNum, err := redis.Int(redisClient.Do("ZCARD", algo.cSet.recommendedItem(userId)))
+
+	log.Println("recNum: ", recNum)
+
+	if recNum > MAX_RECOMMEND_ITEM {
+		redisClient.Do("ZREMRANGEBYRANK", algo.cSet.recommendedItem(userId), MAX_RECOMMEND_ITEM, -1)
+	}
+	return err
+}
+
+func (algo *algorithms) predictFor(userId string, itemId string) float64 {
+
+	result1 := algo.similaritySum(algo.cSet.userSimilarity(userId), algo.cSet.itemLiked(itemId))
+
+	result2 := algo.similaritySum(algo.cSet.userSimilarity(userId), algo.cSet.itemDisliked(itemId))
+
+	log.Println("predict result 1:", result1)
+	log.Println("predict result 2:", result2)
+
+	sum := result1 - result2
+
+	itemLikedCount, _ := redis.Int(redisClient.Do("SCARD", algo.cSet.itemLiked(itemId)))
+
+	itemDislikedCount, _ := redis.Int(redisClient.Do("SCARD", algo.cSet.itemLiked(itemId)))
+
+	return float64(sum) / float64(itemLikedCount+itemDislikedCount)
+}
+
+func (algo *algorithms) similaritySum(simSet string, compSet string) float64 {
+	var similarSum float64 = 0.0
+	userIds, err := redis.Values(redisClient.Do("SMEMBERS", compSet))
+	for _, rs := range userIds {
+		userId, _ := redis.String(rs, err)
+		score, _ := redis.Float64(redisClient.Do("ZSCORE", simSet, userId))
+		similarSum += score
+	}
+	return similarSum
+}
