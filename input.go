@@ -9,7 +9,7 @@ type Input struct {
 	Rate       int
 }
 
-func Import(i *Input) error {
+func ImportRate(i *Input) error {
 	log.Println(i)
 	cSet := collectionSet{}
 	cSet.init(i.Collection)
@@ -25,17 +25,56 @@ func Import(i *Input) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
-func Update(i *Input) error {
+func ImportPoll(i *Input) error {
+	log.Println(i)
+	cSet := collectionSet{}
+	cSet.init(i.Collection)
+	if err := like(&cSet, i.UserId, i.ItemId); err != nil {
+		return err
+	}
+	return nil
+}
+
+func UpdateRate(i *Input) error {
 
 	log.Println(i)
 	if i.Collection == "" {
 		return gocommendError{emptyCollection}
 	}
 
-	algo := algorithms{}
+	algo := algorithmsRate{}
+	algo.cSet.init(i.Collection)
+
+	// update specific user's sets
+	if i.UserId != "" {
+		if err := algo.updateSimilarityFor(i.UserId); err != nil {
+			return err
+		}
+		if err := algo.updateRecommendationFor(i.UserId); err != nil {
+			return err
+		}
+	}
+	if i.ItemId != "" {
+		if err := algo.updateWilsonScore(i.ItemId); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func UpdatePoll(i *Input) error {
+
+	log.Println(i)
+	if i.Collection == "" {
+		return gocommendError{emptyCollection}
+	}
+
+	algo := algorithmsPoll{}
 	algo.cSet.init(i.Collection)
 
 	// update specific user's sets
