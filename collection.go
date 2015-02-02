@@ -2,14 +2,14 @@ package gocommend
 
 type collectionSet struct {
 	collectionPrefix string
-	scoreBoard       string
+	scoreRank        string
 	mostLiked        string
 	mostDisliked     string
 }
 
 func (c *collectionSet) init(collection string) {
 	c.collectionPrefix = collection
-	c.scoreBoard = c.collectionPrefix + ":scoreBoard"
+	c.scoreRank = c.collectionPrefix + ":scoreRank"
 	c.mostLiked = c.collectionPrefix + ":mostLiked"
 	c.mostDisliked = c.collectionPrefix + ":mostDisliked"
 }

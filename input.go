@@ -35,12 +35,17 @@ func Update(i *Input) error {
 		return gocommendError{emptyCollection}
 	}
 
-	algo := algo{}
+	algo := algorithms{}
 	algo.cSet.init(i.Collection)
 
 	// update specific user's sets
 	if i.UserId != "" {
 		if err := algo.updateSimilarityFor(i.UserId); err != nil {
+			return err
+		}
+	}
+	if i.ItemId != "" {
+		if err := algo.updateWilsonScore(i.ItemId); err != nil {
 			return err
 		}
 	}

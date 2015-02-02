@@ -2,15 +2,16 @@ package gocommend
 
 import (
 	"log"
+	"math"
 
 	"github.com/garyburd/redigo/redis"
 )
 
-type algo struct {
+type algorithms struct {
 	cSet collectionSet
 }
 
-func (algo *algo) updateSimilarityFor(userId string) error {
+func (algo *algorithms) updateSimilarityFor(userId string) error {
 	ratedItemSet, err := redis.Values(redisClient.Do("SUNION", algo.cSet.userLiked(userId), algo.cSet.userDisliked(userId)))
 
 	itemLikeDislikeKeys := []string{}
@@ -36,17 +37,19 @@ func (algo *algo) updateSimilarityFor(userId string) error {
 
 		score := algo.jaccardCoefficient(userId, otherUserId)
 
+		redisClient.Do("ZADD", algo.cSet.userSimilarity(userId), score, otherUserId)
+
 		log.Println(score)
 	}
 
-	return nil
+	return err
 }
 
-func (algo *algo) jaccardCoefficient(userId1 string, userId2 string) float32 {
+func (algo *algorithms) jaccardCoefficient(userId1 string, userId2 string) float64 {
 	var (
 		similarity        int     = 0
 		rateInCommon      int     = 0
-		finalJaccardScore float32 = 0.0
+		finalJaccardScore float64 = 0.0
 	)
 
 	resultBothLike, _ := redis.Values(redisClient.Do("SINTER", algo.cSet.userLiked(userId1), algo.cSet.userLiked(userId2)))
@@ -59,11 +62,43 @@ func (algo *algo) jaccardCoefficient(userId1 string, userId2 string) float32 {
 	len3 := len(resultUser1LikeUser2Dislike)
 	len4 := len(resultUser1DislikeUser2Like)
 
+	log.Println(len1, len2, len3, len4)
+
 	similarity = len1 + len2 - len3 - len4
-
-	rateInCommon = len1 + len2 + len3 - len4
-
-	finalJaccardScore = float32(similarity) / float32(rateInCommon)
+	rateInCommon = len1 + len2 + len3 + len4
+	finalJaccardScore = float64(similarity) / float64(rateInCommon)
 
 	return finalJaccardScore
 }
+
+func (algo *algorithms) updateWilsonScore(itemId string) error {
+	var (
+		total int
+		pOS   float64
+		score float64 = 0.0
+	)
+
+	resultLike, _ := redis.Int(redisClient.Do("SCARD", algo.cSet.itemLiked(itemId)))
+	resultDislike, _ := redis.Int(redisClient.Do("SCARD", algo.cSet.itemDisliked(itemId)))
+
+	total = resultLike + resultDislike
+	if total > 0 {
+		pOS = float64(resultLike) / float64(total)
+		score = algo.willsonScore(total, pOS)
+	}
+
+	_, err := redisClient.Do("ZADD", algo.cSet.scoreRank, score, itemId)
+
+	return err
+}
+
+func (algo *algorithms) willsonScore(total int, pOS float64) float64 {
+
+	var z float64 = 1.96
+
+	n := float64(total)
+
+	return math.Abs((pOS + z*z/(2*n) - z*math.Sqrt(pOS*(1-pOS)+z*z/(4*n))) / (1 + z*z/n))
+}
+
+//func (algo *glgorithums)

@@ -11,5 +11,5 @@ const (
 
 	remoteRedisPort = "11311"
 
-	localStartup = true
+	localStartup = false
 )
