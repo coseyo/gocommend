@@ -12,19 +12,27 @@ type algorithms struct {
 }
 
 func (algo *algorithms) updateSimilarityFor(userId string) error {
-	ratedItemSet, err := redis.Values(redisClient.Do("SUNION", algo.cSet.userLiked(userId), algo.cSet.userDisliked(userId)))
+	if ratedItemSet, err := redis.Values(redisClient.Do("SUNION", algo.cSet.userLiked(userId), algo.cSet.userDisliked(userId))); err != nil {
+		return err
+	}
+
+	if len(ratedItemSet) == 0 {
+		return nil
+	}
 
 	itemLikeDislikeKeys := []string{}
-
-	if len(ratedItemSet) > 0 {
-		for _, rs := range ratedItemSet {
-			itemId, _ := redis.String(rs, err)
-			itemLikeDislikeKeys = append(itemLikeDislikeKeys, algo.cSet.itemLiked(itemId))
-			itemLikeDislikeKeys = append(itemLikeDislikeKeys, algo.cSet.itemDisliked(itemId))
-		}
+	for _, rs := range ratedItemSet {
+		itemId, _ := redis.String(rs, err)
+		itemLikeDislikeKeys = append(itemLikeDislikeKeys, algo.cSet.itemLiked(itemId))
+		itemLikeDislikeKeys = append(itemLikeDislikeKeys, algo.cSet.itemDisliked(itemId))
 	}
 
 	otherUserIdsWhoRated, err := redis.Values(redisClient.Do("SUNION", redis.Args{}.AddFlat(itemLikeDislikeKeys)...))
+
+	if err != nil {
+		log.Panicln("error sunion 2")
+		return err
+	}
 
 	for _, rs := range otherUserIdsWhoRated {
 		otherUserId, _ := redis.String(rs, err)
@@ -47,9 +55,8 @@ func (algo *algorithms) updateSimilarityFor(userId string) error {
 
 func (algo *algorithms) jaccardCoefficient(userId1 string, userId2 string) float64 {
 	var (
-		similarity        int     = 0
-		rateInCommon      int     = 0
-		finalJaccardScore float64 = 0.0
+		similarity   int = 0
+		rateInCommon int = 0
 	)
 
 	resultBothLike, _ := redis.Values(redisClient.Do("SINTER", algo.cSet.userLiked(userId1), algo.cSet.userLiked(userId2)))
@@ -62,13 +69,10 @@ func (algo *algorithms) jaccardCoefficient(userId1 string, userId2 string) float
 	len3 := len(resultUser1LikeUser2Dislike)
 	len4 := len(resultUser1DislikeUser2Like)
 
-	log.Println(len1, len2, len3, len4)
-
 	similarity = len1 + len2 - len3 - len4
 	rateInCommon = len1 + len2 + len3 + len4
-	finalJaccardScore = float64(similarity) / float64(rateInCommon)
 
-	return finalJaccardScore
+	return float64(similarity) / float64(rateInCommon)
 }
 
 func (algo *algorithms) updateWilsonScore(itemId string) error {
@@ -129,6 +133,7 @@ func (algo *algorithms) updateRecommendationFor(userId string) error {
 	if recNum > MAX_RECOMMEND_ITEM {
 		redisClient.Do("ZREMRANGEBYRANK", algo.cSet.recommendedItem(userId), MAX_RECOMMEND_ITEM, -1)
 	}
+	redisClient.Do("DEL", algo.cSet.userTemp(userId))
 	return err
 }
 
@@ -138,6 +143,8 @@ func (algo *algorithms) predictFor(userId string, itemId string) float64 {
 
 	result2 := algo.similaritySum(algo.cSet.userSimilarity(userId), algo.cSet.itemDisliked(itemId))
 
+	log.Println("predict userId:", userId)
+	log.Println("predict itemId:", itemId)
 	log.Println("predict result 1:", result1)
 	log.Println("predict result 2:", result2)
 
@@ -153,8 +160,10 @@ func (algo *algorithms) predictFor(userId string, itemId string) float64 {
 func (algo *algorithms) similaritySum(simSet string, compSet string) float64 {
 	var similarSum float64 = 0.0
 	userIds, err := redis.Values(redisClient.Do("SMEMBERS", compSet))
+	log.Println(compSet)
 	for _, rs := range userIds {
 		userId, _ := redis.String(rs, err)
+		log.Println(userIds)
 		score, _ := redis.Float64(redisClient.Do("ZSCORE", simSet, userId))
 		similarSum += score
 	}

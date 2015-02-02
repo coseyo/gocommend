@@ -43,6 +43,9 @@ func Update(i *Input) error {
 		if err := algo.updateSimilarityFor(i.UserId); err != nil {
 			return err
 		}
+		if err := algo.updateRecommendationFor(i.UserId); err != nil {
+			return err
+		}
 	}
 	if i.ItemId != "" {
 		if err := algo.updateWilsonScore(i.ItemId); err != nil {
