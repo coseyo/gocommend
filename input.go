@@ -9,63 +9,60 @@ type Input struct {
 	Rate       int
 }
 
-func ImportRate(i *Input) error {
-	log.Println(i)
+func (this *Input) ImportRate() error {
 	cSet := collectionSet{}
-	cSet.init(i.Collection)
+	cSet.init(this.Collection)
 
-	if i.Rate > 0 {
+	if this.Rate > 0 {
 		log.Println("like")
-		if err := like(&cSet, i.UserId, i.ItemId); err != nil {
+		if err := like(&cSet, this.UserId, this.ItemId); err != nil {
 			return err
 		}
 	} else {
 		log.Println("dislike")
-		if err := dislike(&cSet, i.UserId, i.ItemId); err != nil {
+		if err := dislike(&cSet, this.UserId, this.ItemId); err != nil {
 			return err
 		}
 	}
-	if err := UpdateRate(i); err != nil {
+	if err := this.UpdateRate(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func ImportPoll(i *Input) error {
-	log.Println(i)
+func (this *Input) ImportPoll() error {
 	cSet := collectionSet{}
-	cSet.init(i.Collection)
-	if err := like(&cSet, i.UserId, i.ItemId); err != nil {
+	cSet.init(this.Collection)
+	if err := like(&cSet, this.UserId, this.ItemId); err != nil {
 		return err
 	}
-	if err := UpdatePoll(i); err != nil {
+	if err := this.UpdatePoll(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func UpdateRate(i *Input) error {
+func (this *Input) UpdateRate() error {
 
-	log.Println(i)
-	if i.Collection == "" {
+	if this.Collection == "" {
 		return gocommendError{emptyCollection}
 	}
 
 	algo := algorithmsRate{}
-	algo.cSet.init(i.Collection)
+	algo.cSet.init(this.Collection)
 
 	// update specific user's sets
-	if i.UserId != "" {
-		if err := algo.updateSimilarityFor(i.UserId); err != nil {
+	if this.UserId != "" {
+		if err := algo.updateSimilarityFor(this.UserId); err != nil {
 			return err
 		}
-		if err := algo.updateRecommendationFor(i.UserId); err != nil {
+		if err := algo.updateRecommendationFor(this.UserId); err != nil {
 			return err
 		}
 	}
-	if i.ItemId != "" {
-		if err := algo.updateWilsonScore(i.ItemId); err != nil {
+	if this.ItemId != "" {
+		if err := algo.updateWilsonScore(this.ItemId); err != nil {
 			return err
 		}
 	}
@@ -73,27 +70,26 @@ func UpdateRate(i *Input) error {
 	return nil
 }
 
-func UpdatePoll(i *Input) error {
+func (this *Input) UpdatePoll() error {
 
-	log.Println(i)
-	if i.Collection == "" {
+	if this.Collection == "" {
 		return gocommendError{emptyCollection}
 	}
 
 	algo := algorithmsPoll{}
-	algo.cSet.init(i.Collection)
+	algo.cSet.init(this.Collection)
 
 	// update specific user's sets
-	if i.UserId != "" {
-		if err := algo.updateSimilarityFor(i.UserId); err != nil {
+	if this.UserId != "" {
+		if err := algo.updateSimilarityFor(this.UserId); err != nil {
 			return err
 		}
-		if err := algo.updateRecommendationFor(i.UserId); err != nil {
+		if err := algo.updateRecommendationFor(this.UserId); err != nil {
 			return err
 		}
 	}
-	if i.ItemId != "" {
-		if err := algo.updateWilsonScore(i.ItemId); err != nil {
+	if this.ItemId != "" {
+		if err := algo.updateWilsonScore(this.ItemId); err != nil {
 			return err
 		}
 	}
