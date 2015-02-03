@@ -25,6 +25,9 @@ func ImportRate(i *Input) error {
 			return err
 		}
 	}
+	if err := UpdateRate(i); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -34,6 +37,9 @@ func ImportPoll(i *Input) error {
 	cSet := collectionSet{}
 	cSet.init(i.Collection)
 	if err := like(&cSet, i.UserId, i.ItemId); err != nil {
+		return err
+	}
+	if err := UpdatePoll(i); err != nil {
 		return err
 	}
 	return nil
@@ -106,9 +112,16 @@ func like(cSet *collectionSet, userId string, itemId string) error {
 	if sis, _ := rs.(int); sis == 0 {
 		redisClient.Do("ZINCRBY", cSet.mostLiked, 1, itemId)
 	}
+	if _, err = redisClient.Do("SADD", cSet.allUser, userId); err != nil {
+		return err
+	}
+	if _, err = redisClient.Do("SADD", cSet.allUser, itemId); err != nil {
+		return err
+	}
 	if _, err = redisClient.Do("SADD", cSet.userLiked(userId), itemId); err != nil {
 		return err
 	}
+
 	if _, err = redisClient.Do("SADD", cSet.itemLiked(itemId), userId); err != nil {
 		return err
 	}
@@ -126,6 +139,12 @@ func dislike(cSet *collectionSet, userId string, itemId string) error {
 	}
 	if sis, _ := rs.(int); sis == 0 {
 		redisClient.Do("ZINCRBY", cSet.mostDisliked, 1, itemId)
+	}
+	if _, err = redisClient.Do("SADD", cSet.allUser, userId); err != nil {
+		return err
+	}
+	if _, err = redisClient.Do("SADD", cSet.allUser, itemId); err != nil {
+		return err
 	}
 	if _, err = redisClient.Do("SADD", cSet.userDisliked(userId), itemId); err != nil {
 		return err

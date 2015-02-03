@@ -5,6 +5,8 @@ type collectionSet struct {
 	scoreRank        string
 	mostLiked        string
 	mostDisliked     string
+	allItem          string
+	allUser          string
 }
 
 func (this *collectionSet) init(collection string) {
@@ -12,48 +14,50 @@ func (this *collectionSet) init(collection string) {
 	this.scoreRank = this.collectionPrefix + ":scoreRank"
 	this.mostLiked = this.collectionPrefix + ":mostLiked"
 	this.mostDisliked = this.collectionPrefix + ":mostDisliked"
+	this.allItem = this.collectionPrefix + ":allItem"
+	this.allUser = this.collectionPrefix + ":allUser"
 }
 
 func (this *collectionSet) userLiked(userId string) string {
-	return this.collectionPrefix + ":" + userId + ":" + "userLiked"
+	return this.collectionPrefix + ":" + "userLiked" + ":" + userId
 }
 
 func (this *collectionSet) itemLiked(itemId string) string {
-	return this.collectionPrefix + ":" + itemId + ":" + "itemLiked"
+	return this.collectionPrefix + ":" + "itemLiked" + ":" + itemId
 }
 
 func (this *collectionSet) userDisliked(userId string) string {
-	return this.collectionPrefix + ":" + userId + ":" + "userDisliked"
+	return this.collectionPrefix + ":" + "userDisliked" + ":" + userId
 }
 
 func (this *collectionSet) itemDisliked(itemId string) string {
-	return this.collectionPrefix + ":" + itemId + ":" + "itemDisliked"
+	return this.collectionPrefix + ":" + "itemDisliked" + ":" + itemId
 }
 
 func (this *collectionSet) userSimilarity(userId string) string {
-	return this.collectionPrefix + ":" + userId + ":" + "userSimilarity"
+	return this.collectionPrefix + ":" + "userSimilarity" + ":" + userId
 }
 
 func (this *collectionSet) itemSimilarity(itemId string) string {
-	return this.collectionPrefix + ":" + itemId + ":" + "itemSimilarity"
+	return this.collectionPrefix + ":" + "itemSimilarity" + ":" + itemId
 }
 
 func (this *collectionSet) userTemp(userId string) string {
-	return this.collectionPrefix + ":" + userId + ":" + "userTemp"
+	return this.collectionPrefix + ":" + "userTemp" + ":" + userId
 }
 
 func (this *collectionSet) itemTemp(itemId string) string {
-	return this.collectionPrefix + ":" + itemId + ":" + "itemTemp"
+	return this.collectionPrefix + ":" + "itemTemp" + ":" + itemId
 }
 
 func (this *collectionSet) userTempDiff(userId string) string {
-	return this.collectionPrefix + ":" + userId + ":" + "userTempDiff"
+	return this.collectionPrefix + ":" + "userTempDiff" + ":" + userId
 }
 
 func (this *collectionSet) itemTempDiff(userId string) string {
-	return this.collectionPrefix + ":" + userId + ":" + "itemTempDiff"
+	return this.collectionPrefix + ":" + "itemTempDiff" + ":" + userId
 }
 
 func (this *collectionSet) recommendedItem(userId string) string {
-	return this.collectionPrefix + ":" + userId + ":" + "recommendedItem"
+	return this.collectionPrefix + ":" + "recommendedItem" + ":" + userId
 }
