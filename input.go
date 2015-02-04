@@ -111,14 +111,13 @@ func like(cSet *collectionSet, userId string, itemId string) error {
 	if _, err = redisClient.Do("SADD", cSet.allUser, userId); err != nil {
 		return err
 	}
-	if _, err = redisClient.Do("SADD", cSet.allUser, itemId); err != nil {
-		return err
-	}
 	if _, err = redisClient.Do("SADD", cSet.userLiked(userId), itemId); err != nil {
 		return err
 	}
-
 	if _, err = redisClient.Do("SADD", cSet.itemLiked(itemId), userId); err != nil {
+		return err
+	}
+	if _, err = redisClient.Do("ZREM", cSet.recommendedItem(userId), itemId); err != nil {
 		return err
 	}
 
@@ -146,6 +145,9 @@ func dislike(cSet *collectionSet, userId string, itemId string) error {
 		return err
 	}
 	if _, err = redisClient.Do("SADD", cSet.itemDisliked(itemId), userId); err != nil {
+		return err
+	}
+	if _, err = redisClient.Do("ZREM", cSet.recommendedItem(userId), itemId); err != nil {
 		return err
 	}
 

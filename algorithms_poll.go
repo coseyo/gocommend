@@ -30,7 +30,6 @@ func (this *algorithmsPoll) updateSimilarityFor(userId string) error {
 	otherUserIdsWhoRated, err := redis.Values(redisClient.Do("SUNION", redis.Args{}.AddFlat(itemKeys)...))
 
 	if err != nil {
-		log.Panicln("error sunion 2")
 		return err
 	}
 
@@ -79,18 +78,19 @@ func (this *algorithmsPoll) updateRecommendationFor(userId string) error {
 	if len(mostSimilarUserIds) == 0 {
 		return err
 	}
+	tempSet := this.cSet.userTemp(userId)
+	recommendedSet := this.cSet.recommendedItem(userId)
 
 	for _, rs := range mostSimilarUserIds {
 		similarUserId, _ := redis.String(rs, err)
-		redisClient.Do("SUNIONSTORE", this.cSet.userTemp(userId), this.cSet.userLiked(similarUserId))
+		redisClient.Do("SUNIONSTORE", tempSet, this.cSet.userLiked(similarUserId))
 	}
-
-	diffItemIds, err := redis.Values(redisClient.Do("SDIFF", this.cSet.userTemp(userId), this.cSet.userLiked(userId)))
+	diffItemIds, err := redis.Values(redisClient.Do("SDIFF", tempSet, this.cSet.userLiked(userId)))
 
 	for _, rs := range diffItemIds {
 		diffItemId, _ := redis.String(rs, err)
 		score := this.predictFor(userId, diffItemId)
-		redisClient.Do("ZADD", this.cSet.recommendedItem(userId), score, diffItemId)
+		redisClient.Do("ZADD", recommendedSet, score, diffItemId)
 	}
 
 	recNum, err := redis.Int(redisClient.Do("ZCARD", this.cSet.recommendedItem(userId)))
