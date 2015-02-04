@@ -36,27 +36,42 @@ func main() {
 		userId := os.Args[3]
 		itemId := os.Args[4]
 		rate, _ := strconv.Atoi(os.Args[5])
-		gocommend.ImportPoll(&gocommend.Input{
+		i := gocommend.Input{
 			Collection: collection,
 			UserId:     userId,
 			ItemId:     itemId,
 			Rate:       rate,
-		})
+		}
+		i.ImportPoll()
 
 	case "update":
 		userId := os.Args[3]
 		itemId := os.Args[4]
-		err := gocommend.UpdatePoll(&gocommend.Input{
+		i := gocommend.Input{
 			Collection: collection,
 			UserId:     userId,
 			ItemId:     itemId,
-		})
+		}
+		err := i.UpdatePoll()
 		if err != nil {
 			log.Println(err)
 		}
+
+	case "rec":
+		userId := os.Args[3]
+		o := gocommend.Output{
+			Collection: collection,
+			UserId:     userId,
+			RecNum:     10,
+		}
+		rs, err := o.RecommendedItem()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		log.Println(rs)
 	}
 }
-
 
 
 ````
