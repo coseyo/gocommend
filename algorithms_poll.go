@@ -2,6 +2,8 @@ package gocommend
 
 import "github.com/garyburd/redigo/redis"
 
+// poll type
+// we use this type when we don't collect users's dislike data.
 type algorithmsPoll struct {
 	algorithms
 }

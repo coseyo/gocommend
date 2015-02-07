@@ -1,11 +1,9 @@
 package gocommend
 
-import (
-	"log"
+import "github.com/garyburd/redigo/redis"
 
-	"github.com/garyburd/redigo/redis"
-)
-
+// rate type
+// Use this type when we collet both like and dislike data,
 type algorithmsRate struct {
 	algorithms
 }
@@ -31,24 +29,17 @@ func (this *algorithmsRate) updateSimilarityFor(userId string) error {
 	otherUserIdsWhoRated, err := redis.Values(redisClient.Do("SUNION", redis.Args{}.AddFlat(itemLikeDislikeKeys)...))
 
 	if err != nil {
-		log.Panicln("error sunion 2")
 		return err
 	}
 
 	for _, rs := range otherUserIdsWhoRated {
 		otherUserId, _ := redis.String(rs, err)
-
 		if len(otherUserIdsWhoRated) == 1 || userId == otherUserId {
 			continue
 		}
 
-		log.Println(otherUserId)
-
 		score := this.jaccardCoefficient(userId, otherUserId)
-
 		redisClient.Do("ZADD", this.cSet.userSimilarity(userId), score, otherUserId)
-
-		log.Println(score)
 	}
 
 	return err
@@ -70,8 +61,6 @@ func (this *algorithmsRate) jaccardCoefficient(userId1 string, userId2 string) f
 	len3 := len(resultUser1LikeUser2Dislike)
 	len4 := len(resultUser1DislikeUser2Like)
 
-	log.Println(len1, len2, len3, len4)
-
 	similarity = len1 + len2 - len3 - len4
 	rateInCommon = len1 + len2 + len3 + len4
 	return float64(similarity) / float64(rateInCommon)
@@ -91,7 +80,6 @@ func (this *algorithmsRate) updateRecommendationFor(userId string) error {
 	}
 
 	diffItemIds, err := redis.Values(redisClient.Do("SDIFF", this.cSet.userTemp(userId), this.cSet.userLiked(userId), this.cSet.userDisliked(userId)))
-
 	for _, rs := range diffItemIds {
 		diffItemId, _ := redis.String(rs, err)
 		score := this.predictFor(userId, diffItemId)
@@ -99,8 +87,6 @@ func (this *algorithmsRate) updateRecommendationFor(userId string) error {
 	}
 
 	recNum, err := redis.Int(redisClient.Do("ZCARD", this.cSet.recommendedItem(userId)))
-
-	log.Println("recNum: ", recNum)
 
 	if recNum > MAX_RECOMMEND_ITEM {
 		redisClient.Do("ZREMRANGEBYRANK", this.cSet.recommendedItem(userId), MAX_RECOMMEND_ITEM, -1)
@@ -114,11 +100,6 @@ func (this *algorithmsRate) predictFor(userId string, itemId string) float64 {
 	result1 := this.similaritySum(this.cSet.userSimilarity(userId), this.cSet.itemLiked(itemId))
 
 	result2 := this.similaritySum(this.cSet.userSimilarity(userId), this.cSet.itemDisliked(itemId))
-
-	log.Println("predict userId:", userId)
-	log.Println("predict itemId:", itemId)
-	log.Println("predict result 1:", result1)
-	log.Println("predict result 2:", result2)
 
 	sum := result1 - result2
 

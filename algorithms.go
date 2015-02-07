@@ -1,7 +1,6 @@
 package gocommend
 
 import (
-	"log"
 	"math"
 
 	"github.com/garyburd/redigo/redis"
@@ -49,10 +48,8 @@ func (this *algorithms) willsonScore(total int, pOS float64) float64 {
 func (this *algorithms) similaritySum(simSet string, compSet string) float64 {
 	var similarSum float64 = 0.0
 	userIds, err := redis.Values(redisClient.Do("SMEMBERS", compSet))
-	log.Println(compSet)
 	for _, rs := range userIds {
 		userId, _ := redis.String(rs, err)
-		log.Println(userIds)
 		score, _ := redis.Float64(redisClient.Do("ZSCORE", simSet, userId))
 		similarSum += score
 	}
