@@ -15,7 +15,6 @@ import (
 	"gocommend"
 	"log"
 	"os"
-	"strconv"
 )
 
 func main() {
@@ -28,43 +27,35 @@ func main() {
 	collection := os.Args[2]
 
 	switch handle {
-	case "import":
-		if argNum != 6 {
+	case "importPoll":
+		if argNum != 5 {
 			fmt.Println("num of input params shuold be 5")
 			return
 		}
 		userId := os.Args[3]
 		itemId := os.Args[4]
-		rate, _ := strconv.Atoi(os.Args[5])
-		i := gocommend.Input{
-			Collection: collection,
-			UserId:     userId,
-			ItemId:     itemId,
-			Rate:       rate,
-		}
-		i.ImportPoll()
+		//rate, _ := strconv.Atoi(os.Args[5])
+		i := gocommend.Input{}
+		i.Init(collection)
+		i.ImportPoll(userId, itemId)
 
-	case "update":
+	case "updatePoll":
 		userId := os.Args[3]
 		itemId := os.Args[4]
-		i := gocommend.Input{
-			Collection: collection,
-			UserId:     userId,
-			ItemId:     itemId,
-		}
-		err := i.UpdatePoll()
+		i := gocommend.Input{}
+		i.Init(collection)
+		err := i.UpdatePoll(userId, itemId)
 		if err != nil {
 			log.Println(err)
 		}
 
 	case "rec":
 		userId := os.Args[3]
-		o := gocommend.Output{
-			Collection: collection,
-			UserId:     userId,
-			RecNum:     10,
-		}
-		rs, err := o.RecommendedItem()
+		//itemId := os.Args[4]
+		recNum := 10
+		o := gocommend.Output{}
+		o.Init(collection, recNum)
+		rs, err := o.RecommendedItem(userId)
 		if err != nil {
 			log.Println(err)
 			return
@@ -72,6 +63,7 @@ func main() {
 		log.Println(rs)
 	}
 }
+
 
 
 ````

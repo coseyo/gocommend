@@ -1,10 +1,6 @@
 package gocommend
 
-import (
-	"log"
-
-	"github.com/garyburd/redigo/redis"
-)
+import "github.com/garyburd/redigo/redis"
 
 type algorithmsPoll struct {
 	algorithms
@@ -35,18 +31,12 @@ func (this *algorithmsPoll) updateSimilarityFor(userId string) error {
 
 	for _, rs := range otherUserIdsWhoRated {
 		otherUserId, _ := redis.String(rs, err)
-
 		if len(otherUserIdsWhoRated) == 1 || userId == otherUserId {
 			continue
 		}
 
-		log.Println(otherUserId)
-
 		score := this.jaccardCoefficient(userId, otherUserId)
-
 		redisClient.Do("ZADD", this.cSet.userSimilarity(userId), score, otherUserId)
-
-		log.Println(score)
 	}
 
 	return err
@@ -63,8 +53,6 @@ func (this *algorithmsPoll) jaccardCoefficient(userId1 string, userId2 string) f
 
 	len2, _ := redis.Int(redisClient.Do("SCARD", this.cSet.userLiked(userId1)))
 	len3, _ := redis.Int(redisClient.Do("SCARD", this.cSet.userLiked(userId2)))
-
-	log.Println(len1, len2, len3)
 
 	interset = len1
 	unionset = len2 + len3 - len1
@@ -94,8 +82,6 @@ func (this *algorithmsPoll) updateRecommendationFor(userId string) error {
 	}
 
 	recNum, err := redis.Int(redisClient.Do("ZCARD", this.cSet.recommendedItem(userId)))
-
-	log.Println("recNum: ", recNum)
 
 	if recNum > MAX_RECOMMEND_ITEM {
 		redisClient.Do("ZREMRANGEBYRANK", this.cSet.recommendedItem(userId), MAX_RECOMMEND_ITEM, -1)

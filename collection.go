@@ -1,5 +1,6 @@
 package gocommend
 
+// redis key set
 type collectionSet struct {
 	collectionPrefix string
 	scoreRank        string

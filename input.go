@@ -1,68 +1,75 @@
 package gocommend
 
-import "log"
+import "github.com/beego/redigo/redis"
 
+// input, now support two type of algo
 type Input struct {
-	Collection string
-	UserId     string
-	ItemId     string
-	Rate       int
+	cSet collectionSet
 }
 
-func (this *Input) ImportRate() error {
-	cSet := collectionSet{}
-	cSet.init(this.Collection)
+// init cSet
+func (this *Input) Init(collection string) error {
+	if collection == "" {
+		return gocommendError{emptyCollection}
+	}
+	this.cSet = collectionSet{}
+	this.cSet.init(collection)
+	return nil
+}
 
-	if this.Rate > 0 {
-		log.Println("like")
-		if err := like(&cSet, this.UserId, this.ItemId); err != nil {
+// import rate type data
+func (this *Input) ImportRate(userId string, itemId string, rate int) error {
+	if rate > 0 {
+		if err := like(&this.cSet, userId, itemId); err != nil {
 			return err
 		}
 	} else {
-		log.Println("dislike")
-		if err := dislike(&cSet, this.UserId, this.ItemId); err != nil {
+		if err := dislike(&this.cSet, userId, itemId); err != nil {
 			return err
 		}
 	}
-	if err := this.UpdateRate(); err != nil {
+	if err := this.UpdateRate(userId, itemId); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (this *Input) ImportPoll() error {
-	cSet := collectionSet{}
-	cSet.init(this.Collection)
-	if err := like(&cSet, this.UserId, this.ItemId); err != nil {
+// import poll type data
+func (this *Input) ImportPoll(userId string, itemId string) error {
+
+	if err := like(&this.cSet, userId, itemId); err != nil {
 		return err
 	}
-	if err := this.UpdatePoll(); err != nil {
+	if err := this.UpdatePoll(userId, itemId); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (this *Input) UpdateRate() error {
-
-	if this.Collection == "" {
-		return gocommendError{emptyCollection}
-	}
+// update rate data
+func (this *Input) UpdateRate(userId string, itemId string) error {
 
 	algo := algorithmsRate{}
-	algo.cSet.init(this.Collection)
+	algo.cSet = this.cSet
 
-	// update specific user's sets
-	if this.UserId != "" {
-		if err := algo.updateSimilarityFor(this.UserId); err != nil {
+	if userId != "" {
+		if err := algo.updateSimilarityFor(userId); err != nil {
 			return err
 		}
-		if err := algo.updateRecommendationFor(this.UserId); err != nil {
+		if err := algo.updateRecommendationFor(userId); err != nil {
 			return err
 		}
 	}
-	if this.ItemId != "" {
-		if err := algo.updateWilsonScore(this.ItemId); err != nil {
+
+	if itemId == "" {
+		ratedItemSet, err := redis.Values(redisClient.Do("SMEMBERS", algo.cSet.userLiked(userId)))
+		for _, rs := range ratedItemSet {
+			ratedItemId, _ := redis.String(rs, err)
+			algo.updateWilsonScore(ratedItemId)
+		}
+	} else {
+		if err := algo.updateWilsonScore(itemId); err != nil {
 			return err
 		}
 	}
@@ -70,26 +77,27 @@ func (this *Input) UpdateRate() error {
 	return nil
 }
 
-func (this *Input) UpdatePoll() error {
-
-	if this.Collection == "" {
-		return gocommendError{emptyCollection}
-	}
+// update poll data
+func (this *Input) UpdatePoll(userId string, itemId string) error {
 
 	algo := algorithmsPoll{}
-	algo.cSet.init(this.Collection)
+	algo.cSet = this.cSet
 
-	// update specific user's sets
-	if this.UserId != "" {
-		if err := algo.updateSimilarityFor(this.UserId); err != nil {
-			return err
-		}
-		if err := algo.updateRecommendationFor(this.UserId); err != nil {
-			return err
-		}
+	if err := algo.updateSimilarityFor(userId); err != nil {
+		return err
 	}
-	if this.ItemId != "" {
-		if err := algo.updateWilsonScore(this.ItemId); err != nil {
+	if err := algo.updateRecommendationFor(userId); err != nil {
+		return err
+	}
+
+	if itemId == "" {
+		ratedItemSet, err := redis.Values(redisClient.Do("SMEMBERS", algo.cSet.userLiked(userId)))
+		for _, rs := range ratedItemSet {
+			ratedItemId, _ := redis.String(rs, err)
+			algo.updateWilsonScore(ratedItemId)
+		}
+	} else {
+		if err := algo.updateWilsonScore(itemId); err != nil {
 			return err
 		}
 	}
@@ -97,6 +105,7 @@ func (this *Input) UpdatePoll() error {
 	return nil
 }
 
+// import original data
 func like(cSet *collectionSet, userId string, itemId string) error {
 	var (
 		rs  interface{}
@@ -124,6 +133,7 @@ func like(cSet *collectionSet, userId string, itemId string) error {
 	return nil
 }
 
+// import original data
 func dislike(cSet *collectionSet, userId string, itemId string) error {
 	var (
 		rs  interface{}

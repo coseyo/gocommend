@@ -2,24 +2,24 @@ package gocommend
 
 import "github.com/garyburd/redigo/redis"
 
+// output, get data what you want
 type Output struct {
-	collection string
-	userId     string
-	itemId     string
-	recNum     int
-	cSet       collectionSet
+	recNum int
+	cSet   collectionSet
 }
 
-func (this *Output) Init(collection string, userId string, itemId string, recNum int) error {
-	this.collection = collection
-	this.userId = userId
-	this.itemId = itemId
+// init the params and set the cSet
+func (this *Output) Init(collection string, recNum int) error {
+	if collection == "" {
+		return gocommendError{emptyCollection}
+	}
 	this.recNum = recNum
 	this.cSet = collectionSet{}
 	this.cSet.init(collection)
 	return nil
 }
 
+// convert interface slice to string slice
 func (this *Output) toStrings(arrayInterface []interface{}) (strings []string) {
 	for _, rs := range arrayInterface {
 		s, _ := redis.String(rs, nil)
@@ -28,18 +28,42 @@ func (this *Output) toStrings(arrayInterface []interface{}) (strings []string) {
 	return
 }
 
-func (this *Output) RecommendedItem() ([]string, error) {
-	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.recommendedItem(this.userId), 0, this.recNum))
+// get recommend items for user
+func (this *Output) RecommendedItem(userId string) ([]string, error) {
+	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.recommendedItem(userId), 0, this.recNum))
 	if err != nil {
 		return nil, err
 	}
 	return this.toStrings(arrayInterface), err
 }
 
-//func (this *Output) MostLiked() ([]string, error) {
-//	cSet := collectionSet{}
-//	cSet.init(this.Collection)
-//	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", cSet.recommendedItem(this.UserId), 0, this.RecNum))
+// get the best rated items
+func (this *Output) BestRated() ([]string, error) {
+	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.scoreRank, 0, this.recNum))
+	if err != nil {
+		return nil, err
+	}
+	return this.toStrings(arrayInterface), err
+}
+
+func (this *Output) MostLiked() ([]string, error) {
+	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.mostLiked, 0, this.recNum))
+	if err != nil {
+		return nil, err
+	}
+	return this.toStrings(arrayInterface), err
+}
+
+func (this *Output) MostSimilarUsers(userId string) ([]string, error) {
+	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.userSimilarity(userId), 0, this.recNum))
+	if err != nil {
+		return nil, err
+	}
+	return this.toStrings(arrayInterface), err
+}
+
+//func (this *Output) MostSimilarItems(itemId string) ([]string, error) {
+//	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.userSimilarity(itemId), 0, this.recNum))
 //	if err != nil {
 //		return nil, err
 //	}

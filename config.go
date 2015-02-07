@@ -5,7 +5,7 @@ const (
 
 	MAX_RECOMMEND_ITEM = 30
 
-	localRedisURL = "192.168.1.5"
+	localRedisURL = "192.168.1.7"
 
 	localRedisPort = "6379"
 
@@ -13,5 +13,5 @@ const (
 
 	remoteRedisPort = "11311"
 
-	localStartup = false
+	localStartup = true
 )
