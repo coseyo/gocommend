@@ -8,7 +8,7 @@ type algorithmsPoll struct {
 	algorithms
 }
 
-func (this *algorithmsPoll) updateSimilarityFor(userId string) error {
+func (this *algorithmsPoll) updateUserSimilarity(userId string) error {
 	ratedItemSet, err := redis.Values(redisClient.Do("SMEMBERS", this.cSet.userLiked(userId)))
 
 	if err != nil {
@@ -37,24 +37,64 @@ func (this *algorithmsPoll) updateSimilarityFor(userId string) error {
 			continue
 		}
 
-		score := this.jaccardCoefficient(userId, otherUserId)
+		score := this.jaccardCoefficient(this.cSet.userLiked(userId), this.cSet.userLiked(otherUserId))
 		redisClient.Do("ZADD", this.cSet.userSimilarity(userId), score, otherUserId)
 	}
 
 	return err
 }
 
-func (this *algorithmsPoll) jaccardCoefficient(userId1 string, userId2 string) float64 {
+func (this *algorithmsPoll) updateItemSimilarity(itemId string) error {
+	ratedUserSet, err := redis.Values(redisClient.Do("SMEMBERS", this.cSet.itemLiked(itemId)))
+
+	if err != nil {
+		return err
+	}
+
+	if len(ratedUserSet) == 0 {
+		return nil
+	}
+
+	userKeys := []string{}
+	for _, rs := range ratedUserSet {
+		userId, _ := redis.String(rs, err)
+		userKeys = append(userKeys, this.cSet.userLiked(userId))
+	}
+
+	otherItemIdsBeingRated, err := redis.Values(redisClient.Do("SUNION", redis.Args{}.AddFlat(userKeys)...))
+
+	if err != nil {
+		return err
+	}
+	if len(otherItemIdsBeingRated) == 1 {
+		return nil
+	}
+
+	for _, rs := range otherItemIdsBeingRated {
+		otherItemId, _ := redis.String(rs, err)
+		if itemId == otherItemId {
+			continue
+		}
+
+		score := this.jaccardCoefficient(this.cSet.itemLiked(itemId), this.cSet.itemLiked(otherItemId))
+		redisClient.Do("ZADD", this.cSet.itemSimilarity(itemId), score, otherItemId)
+	}
+
+	return err
+}
+
+// calculate 2 sets's similarity
+func (this *algorithmsPoll) jaccardCoefficient(set1 string, set2 string) float64 {
 	var (
 		interset int = 0
 		unionset int = 0
 	)
 
-	resultInter, _ := redis.Values(redisClient.Do("SINTER", this.cSet.userLiked(userId1), this.cSet.userLiked(userId2)))
+	resultInter, _ := redis.Values(redisClient.Do("SINTER", set1, set2))
 	len1 := len(resultInter)
 
-	len2, _ := redis.Int(redisClient.Do("SCARD", this.cSet.userLiked(userId1)))
-	len3, _ := redis.Int(redisClient.Do("SCARD", this.cSet.userLiked(userId2)))
+	len2, _ := redis.Int(redisClient.Do("SCARD", set1))
+	len3, _ := redis.Int(redisClient.Do("SCARD", set2))
 
 	interset = len1
 	unionset = len2 + len3 - len1

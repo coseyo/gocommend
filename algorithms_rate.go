@@ -1,6 +1,10 @@
 package gocommend
 
-import "github.com/garyburd/redigo/redis"
+import (
+	"math"
+
+	"github.com/garyburd/redigo/redis"
+)
 
 // rate type
 // Use this type when we collet both like and dislike data,
@@ -31,10 +35,13 @@ func (this *algorithmsRate) updateSimilarityFor(userId string) error {
 	if err != nil {
 		return err
 	}
+	if len(otherUserIdsWhoRated) == 1 {
+		return nil
+	}
 
 	for _, rs := range otherUserIdsWhoRated {
 		otherUserId, _ := redis.String(rs, err)
-		if len(otherUserIdsWhoRated) == 1 || userId == otherUserId {
+		if userId == otherUserId {
 			continue
 		}
 
@@ -108,4 +115,37 @@ func (this *algorithmsRate) predictFor(userId string, itemId string) float64 {
 	itemDislikedCount, _ := redis.Int(redisClient.Do("SCARD", this.cSet.itemLiked(itemId)))
 
 	return float64(sum) / float64(itemLikedCount+itemDislikedCount)
+}
+
+// update socre
+func (this *algorithms) updateWilsonScore(itemId string) error {
+	var (
+		total int
+		pOS   float64
+		score float64 = 0.0
+	)
+
+	resultLike, _ := redis.Int(redisClient.Do("SCARD", this.cSet.itemLiked(itemId)))
+	resultDislike, _ := redis.Int(redisClient.Do("SCARD", this.cSet.itemDisliked(itemId)))
+
+	total = resultLike + resultDislike
+	if total > 0 {
+		pOS = float64(resultLike) / float64(total)
+		score = this.willsonScore(total, pOS)
+	}
+
+	_, err := redisClient.Do("ZADD", this.cSet.scoreRank, score, itemId)
+
+	return err
+}
+
+// willson score
+func (this *algorithms) willsonScore(total int, pOS float64) float64 {
+
+	// 95%
+	var z float64 = 1.96
+
+	n := float64(total)
+
+	return math.Abs((pOS + z*z/(2*n) - z*math.Sqrt(pOS*(1-pOS)+z*z/(4*n))) / (1 + z*z/n))
 }

@@ -1,6 +1,6 @@
 package gocommend
 
-import "github.com/beego/redigo/redis"
+import "github.com/garyburd/redigo/redis"
 
 // input, now support two type of algo
 type Input struct {
@@ -83,7 +83,7 @@ func (this *Input) UpdatePoll(userId string, itemId string) error {
 	algo := algorithmsPoll{}
 	algo.cSet = this.cSet
 
-	if err := algo.updateSimilarityFor(userId); err != nil {
+	if err := algo.updateUserSimilarity(userId); err != nil {
 		return err
 	}
 	if err := algo.updateRecommendationFor(userId); err != nil {
@@ -94,10 +94,10 @@ func (this *Input) UpdatePoll(userId string, itemId string) error {
 		ratedItemSet, err := redis.Values(redisClient.Do("SMEMBERS", algo.cSet.userLiked(userId)))
 		for _, rs := range ratedItemSet {
 			ratedItemId, _ := redis.String(rs, err)
-			algo.updateWilsonScore(ratedItemId)
+			algo.updateItemSimilarity(ratedItemId)
 		}
 	} else {
-		if err := algo.updateWilsonScore(itemId); err != nil {
+		if err := algo.updateItemSimilarity(itemId); err != nil {
 			return err
 		}
 	}

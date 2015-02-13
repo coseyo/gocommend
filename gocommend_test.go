@@ -18,7 +18,7 @@ func refute(t *testing.T, a interface{}, b interface{}) {
 }
 
 func Test_importPoll(t *testing.T) {
-	collection := "rec_test"
+	collection := "rec_test2"
 	i := Input{}
 	i.Init(collection)
 	err := i.ImportPoll("u1", "i1")
@@ -30,7 +30,7 @@ func Test_importPoll(t *testing.T) {
 }
 
 func Test_updatePoll(t *testing.T) {
-	collection := "rec_test"
+	collection := "rec_test2"
 	i := Input{}
 	i.Init(collection)
 	err := i.UpdatePoll("u1", "")
@@ -39,7 +39,7 @@ func Test_updatePoll(t *testing.T) {
 }
 
 func Test_RecommendedItem(t *testing.T) {
-	collection := "rec_test"
+	collection := "rec_test2"
 	recNum := 10
 	o := Output{}
 	o.Init(collection, recNum)
