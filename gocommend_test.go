@@ -43,7 +43,7 @@ func Test_RecommendedItem(t *testing.T) {
 	recNum := 10
 	o := Output{}
 	o.Init(collection, recNum)
-	items, err := o.RecommendedItem("u2")
+	items, err := o.RecommendedItemForUser("u2")
 	expect(t, err, nil)
 	expect(t, items[0], "i3")
 }
