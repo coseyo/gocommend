@@ -123,11 +123,6 @@ func (this *algorithmsPoll) updateRecommendationFor(userId string) error {
 		redisClient.Do("ZADD", recommendedSet, score, diffItemId)
 	}
 
-	recNum, err := redis.Int(redisClient.Do("ZCARD", this.cSet.recommendedItem(userId)))
-
-	if recNum > MAX_RECOMMEND_ITEM {
-		redisClient.Do("ZREMRANGEBYRANK", this.cSet.recommendedItem(userId), MAX_RECOMMEND_ITEM, -1)
-	}
 	redisClient.Do("DEL", this.cSet.userTemp(userId))
 	return err
 }

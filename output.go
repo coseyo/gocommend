@@ -29,8 +29,16 @@ func (this *Output) toStrings(arrayInterface []interface{}) (strings []string) {
 }
 
 // get recommend items for user
-func (this *Output) RecommendedItem(userId string) ([]string, error) {
+func (this *Output) RecommendedItemForUser(userId string) ([]string, error) {
 	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.recommendedItem(userId), 0, this.recNum))
+	if err != nil {
+		return nil, err
+	}
+	return this.toStrings(arrayInterface), err
+}
+
+func (this *Output) RecommendedItemForItem(itemId string) ([]string, error) {
+	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.itemSimilarity(itemId), 0, this.recNum))
 	if err != nil {
 		return nil, err
 	}

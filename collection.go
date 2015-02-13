@@ -11,7 +11,7 @@ type collectionSet struct {
 }
 
 func (this *collectionSet) init(collection string) {
-	this.collectionPrefix = collection
+	this.collectionPrefix = DB_PREFIX + ":" + collection
 	this.scoreRank = this.collectionPrefix + ":scoreRank"
 	this.mostLiked = this.collectionPrefix + ":mostLiked"
 	this.mostDisliked = this.collectionPrefix + ":mostDisliked"
