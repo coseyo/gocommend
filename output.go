@@ -37,7 +37,18 @@ func (this *Output) RecommendedItemForUser(userId string) ([]string, error) {
 	return this.toStrings(arrayInterface), err
 }
 
+// get recommend items by item similarty
 func (this *Output) RecommendedItemForItem(itemId string) ([]string, error) {
+	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.itemSimilarity(itemId), 0, this.recNum))
+	if err != nil {
+		return nil, err
+	}
+	return this.toStrings(arrayInterface), err
+}
+
+// get recommend items by item similarty except users had rated
+// todo: zrange return set ?
+func (this *Output) RecommendedItemForItemByUser(itemId string, userId string) ([]string, error) {
 	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.itemSimilarity(itemId), 0, this.recNum))
 	if err != nil {
 		return nil, err

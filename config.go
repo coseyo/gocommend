@@ -7,6 +7,7 @@ const (
 	// max recommend item num to store
 	MAX_RECOMMEND_ITEM = 30
 
+	// redis key prefix
 	DB_PREFIX = "gocommend"
 
 	MAX_SIMILARITY_ITEM = 100
