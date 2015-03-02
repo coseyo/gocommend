@@ -46,16 +46,6 @@ func (this *Output) RecommendedItemForItem(itemId string) ([]string, error) {
 	return this.toStrings(arrayInterface), err
 }
 
-// get recommend items by item similarty except users had rated
-// todo: zrange return set ?
-func (this *Output) RecommendedItemForItemByUser(itemId string, userId string) ([]string, error) {
-	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.itemSimilarity(itemId), 0, this.recNum))
-	if err != nil {
-		return nil, err
-	}
-	return this.toStrings(arrayInterface), err
-}
-
 // get the best rated items
 func (this *Output) BestRated() ([]string, error) {
 	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.scoreRank, 0, this.recNum))
@@ -80,11 +70,3 @@ func (this *Output) MostSimilarUsers(userId string) ([]string, error) {
 	}
 	return this.toStrings(arrayInterface), err
 }
-
-//func (this *Output) MostSimilarItems(itemId string) ([]string, error) {
-//	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.userSimilarity(itemId), 0, this.recNum))
-//	if err != nil {
-//		return nil, err
-//	}
-//	return this.toStrings(arrayInterface), err
-//}
