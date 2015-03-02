@@ -29,7 +29,7 @@ func (this *Output) toStrings(arrayInterface []interface{}) (strings []string) {
 }
 
 // get recommend items for user
-func (this *Output) RecommendedItemForUser(userId string) ([]string, error) {
+func (this *Output) SimilarItemForUser(userId string) ([]string, error) {
 	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.recommendedItem(userId), 0, this.recNum))
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func (this *Output) RecommendedItemForUser(userId string) ([]string, error) {
 }
 
 // get recommend items by item similarty
-func (this *Output) RecommendedItemForItem(itemId string) ([]string, error) {
+func (this *Output) SimilarItemForItem(itemId string) ([]string, error) {
 	arrayInterface, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.itemSimilarity(itemId), 0, this.recNum))
 	if err != nil {
 		return nil, err
