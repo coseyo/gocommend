@@ -190,7 +190,7 @@ func updatePollHandler(w http.ResponseWriter, req *http.Request) {
 	s.responseJson("ok", "", "")
 }
 
-func similarItemForUserHandler(w http.ResponseWriter, req *http.Request) {
+func recommendItemForUserHandler(w http.ResponseWriter, req *http.Request) {
 	s := commendServer{}
 	if err := s.init(w, req); err != "" {
 		s.responseJson("error", "", err)
@@ -211,7 +211,7 @@ func similarItemForUserHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	o := gocommend.Output{}
 	o.Init(collection, recNum)
-	rs, err := o.SimilarItemForUser(userId)
+	rs, err := o.RecommendItemForUser(userId)
 	log.Println(rs)
 	if err != nil {
 		s.responseJson("error", "", err.Error())
@@ -220,7 +220,7 @@ func similarItemForUserHandler(w http.ResponseWriter, req *http.Request) {
 	s.responseJson("ok", rs, "")
 }
 
-func similarItemForItemHandler(w http.ResponseWriter, req *http.Request) {
+func recommendItemForItemHandler(w http.ResponseWriter, req *http.Request) {
 	s := commendServer{}
 	if err := s.init(w, req); err != "" {
 		s.responseJson("error", "", err)
@@ -242,7 +242,7 @@ func similarItemForItemHandler(w http.ResponseWriter, req *http.Request) {
 
 	o := gocommend.Output{}
 	o.Init(collection, recNum)
-	rs, err := o.SimilarItemForItem(itemId)
+	rs, err := o.RecommendItemForItem(itemId)
 	if err != nil {
 		s.responseJson("error", "", err.Error())
 		return
@@ -254,11 +254,12 @@ func main() {
 
 	http.HandleFunc("/importPoll", importPollHandler)
 	http.HandleFunc("/updatePoll", updatePollHandler)
-	http.HandleFunc("/similarItemForUser", similarItemForUserHandler)
-	http.HandleFunc("/similarItemForItem", similarItemForItemHandler)
+	http.HandleFunc("/recommendItemForUser", recommendItemForUserHandler)
+	http.HandleFunc("/recommendItemForItem", recommendItemForItemHandler)
 
 	http.ListenAndServe(":8888", nil)
 }
+
 
 
 ````

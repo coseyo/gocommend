@@ -144,3 +144,38 @@ func (this *algorithms) willsonScore(total int, pOS float64) float64 {
 
 	return math.Abs((pOS + z*z/(2*n) - z*math.Sqrt(pOS*(1-pOS)+z*z/(4*n))) / (1 + z*z/n))
 }
+
+func (this *algorithmsRate) updateAllData() error {
+	userIds, err := redis.Values(redisClient.Do("SMEMBERS", this.cSet.allUser))
+	for _, rs := range userIds {
+		userId, _ := redis.String(rs, err)
+		err = this.updateData(userId, "")
+		if err != nil {
+			break
+		}
+	}
+	return err
+}
+
+func (this *algorithmsRate) updateData(userId string, itemId string) error {
+
+	if err := this.updateSimilarityFor(userId); err != nil {
+		return err
+	}
+	if err := this.updateRecommendationFor(userId); err != nil {
+		return err
+	}
+
+	if itemId == "" {
+		ratedItemSet, err := redis.Values(redisClient.Do("SMEMBERS", this.cSet.userLiked(userId)))
+		for _, rs := range ratedItemSet {
+			ratedItemId, _ := redis.String(rs, err)
+			this.updateWilsonScore(ratedItemId)
+		}
+	} else {
+		if err := this.updateWilsonScore(itemId); err != nil {
+			return err
+		}
+	}
+	return nil
+}

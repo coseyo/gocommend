@@ -8,6 +8,7 @@ type algorithmsPoll struct {
 	algorithms
 }
 
+// CF calculate, u1 poll i1 i2 i3, u2 poll i2 i3, so get the similarity by jaccardCoefficient and update it
 func (this *algorithmsPoll) updateUserSimilarity(userId string) error {
 	ratedItemSet, err := redis.Values(redisClient.Do("SMEMBERS", this.cSet.userLiked(userId)))
 
@@ -44,6 +45,7 @@ func (this *algorithmsPoll) updateUserSimilarity(userId string) error {
 	return err
 }
 
+// CF calculate, i1 polled by u1 u2 u3, i2 polled by u2 u3, so get the similarity by jaccardCoefficient and update it
 func (this *algorithmsPoll) updateItemSimilarity(itemId string) error {
 	ratedUserSet, err := redis.Values(redisClient.Do("SMEMBERS", this.cSet.itemLiked(itemId)))
 
@@ -101,6 +103,7 @@ func (this *algorithmsPoll) jaccardCoefficient(set1 string, set2 string) float64
 	return float64(interset) / float64(unionset)
 }
 
+// pick out the recommend items from the most similar users's rated items exclude having been rated ones, and update it.
 func (this *algorithmsPoll) updateRecommendationFor(userId string) error {
 
 	mostSimilarUserIds, err := redis.Values(redisClient.Do("ZREVRANGE", this.cSet.userSimilarity(userId), 0, MAX_NEIGHBORS-1))
@@ -127,6 +130,7 @@ func (this *algorithmsPoll) updateRecommendationFor(userId string) error {
 	return err
 }
 
+// get item's predict score for user
 func (this *algorithmsPoll) predictFor(userId string, itemId string) float64 {
 
 	result1 := this.similaritySum(this.cSet.userSimilarity(userId), this.cSet.itemLiked(itemId))
@@ -134,4 +138,39 @@ func (this *algorithmsPoll) predictFor(userId string, itemId string) float64 {
 	itemLikedCount, _ := redis.Int(redisClient.Do("SCARD", this.cSet.itemLiked(itemId)))
 
 	return float64(result1) / float64(itemLikedCount)
+}
+
+func (this *algorithmsPoll) updateAllData() error {
+	userIds, err := redis.Values(redisClient.Do("SMEMBERS", this.cSet.allUser))
+	for _, rs := range userIds {
+		userId, _ := redis.String(rs, err)
+		err = this.updateData(userId, "")
+		if err != nil {
+			break
+		}
+	}
+	return err
+}
+
+func (this *algorithmsPoll) updateData(userId string, itemId string) error {
+
+	if err := this.updateUserSimilarity(userId); err != nil {
+		return err
+	}
+	if err := this.updateRecommendationFor(userId); err != nil {
+		return err
+	}
+
+	if itemId == "" {
+		ratedItemSet, err := redis.Values(redisClient.Do("SMEMBERS", this.cSet.userLiked(userId)))
+		for _, rs := range ratedItemSet {
+			ratedItemId, _ := redis.String(rs, err)
+			this.updateItemSimilarity(ratedItemId)
+		}
+	} else {
+		if err := this.updateItemSimilarity(itemId); err != nil {
+			return err
+		}
+	}
+	return nil
 }

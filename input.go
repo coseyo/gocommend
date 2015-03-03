@@ -1,7 +1,5 @@
 package gocommend
 
-import "github.com/garyburd/redigo/redis"
-
 // input, now support two type of algo
 type Input struct {
 	cSet collectionSet
@@ -49,60 +47,28 @@ func (this *Input) ImportPoll(userId string, itemId string) error {
 
 // update rate data
 func (this *Input) UpdateRate(userId string, itemId string) error {
-
 	algo := algorithmsRate{}
 	algo.cSet = this.cSet
+	return algo.updateData(userId, itemId)
+}
 
-	if userId != "" {
-		if err := algo.updateSimilarityFor(userId); err != nil {
-			return err
-		}
-		if err := algo.updateRecommendationFor(userId); err != nil {
-			return err
-		}
-	}
-
-	if itemId == "" {
-		ratedItemSet, err := redis.Values(redisClient.Do("SMEMBERS", algo.cSet.userLiked(userId)))
-		for _, rs := range ratedItemSet {
-			ratedItemId, _ := redis.String(rs, err)
-			algo.updateWilsonScore(ratedItemId)
-		}
-	} else {
-		if err := algo.updateWilsonScore(itemId); err != nil {
-			return err
-		}
-	}
-
-	return nil
+func (this *Input) UpdateAllRate() error {
+	algo := algorithmsRate{}
+	algo.cSet = this.cSet
+	return algo.updateAllData()
 }
 
 // update poll data
 func (this *Input) UpdatePoll(userId string, itemId string) error {
-
 	algo := algorithmsPoll{}
 	algo.cSet = this.cSet
+	return algo.updateData(userId, itemId)
+}
 
-	if err := algo.updateUserSimilarity(userId); err != nil {
-		return err
-	}
-	if err := algo.updateRecommendationFor(userId); err != nil {
-		return err
-	}
-
-	if itemId == "" {
-		ratedItemSet, err := redis.Values(redisClient.Do("SMEMBERS", algo.cSet.userLiked(userId)))
-		for _, rs := range ratedItemSet {
-			ratedItemId, _ := redis.String(rs, err)
-			algo.updateItemSimilarity(ratedItemId)
-		}
-	} else {
-		if err := algo.updateItemSimilarity(itemId); err != nil {
-			return err
-		}
-	}
-
-	return nil
+func (this *Input) UpdateAllPoll() error {
+	algo := algorithmsPoll{}
+	algo.cSet = this.cSet
+	return algo.updateAllData()
 }
 
 // import original data
