@@ -190,6 +190,28 @@ func updatePollHandler(w http.ResponseWriter, req *http.Request) {
 	s.responseJson("ok", "", "")
 }
 
+func updateAllPollHandler(w http.ResponseWriter, req *http.Request) {
+	s := commendServer{}
+	if err := s.init(w, req); err != "" {
+		s.responseJson("error", "", err)
+		return
+	}
+
+	collection, err1 := s.getParam("collection", false)
+	if err1 != "" {
+		s.responseJson("error", "", err1)
+		return
+	}
+
+	i := gocommend.Input{}
+	i.Init(collection)
+	if err := i.UpdateAllPoll(); err != nil {
+		s.responseJson("error", "", err.Error())
+		return
+	}
+	s.responseJson("ok", "", "")
+}
+
 func recommendItemForUserHandler(w http.ResponseWriter, req *http.Request) {
 	s := commendServer{}
 	if err := s.init(w, req); err != "" {
@@ -254,12 +276,11 @@ func main() {
 
 	http.HandleFunc("/importPoll", importPollHandler)
 	http.HandleFunc("/updatePoll", updatePollHandler)
+	http.HandleFunc("/updateAllPoll", updateAllPollHandler)
 	http.HandleFunc("/recommendItemForUser", recommendItemForUserHandler)
 	http.HandleFunc("/recommendItemForItem", recommendItemForItemHandler)
 
 	http.ListenAndServe(":8888", nil)
 }
-
-
 
 ````
