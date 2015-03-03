@@ -38,12 +38,20 @@ func Test_updatePoll(t *testing.T) {
 	i.UpdatePoll("u2", "")
 }
 
-func Test_RecommendedItem(t *testing.T) {
+func Test_updateAllPoll(t *testing.T) {
+	collection := "rec_test2"
+	i := Input{}
+	i.Init(collection)
+	err := i.UpdateAllPoll()
+	expect(t, err, nil)
+}
+
+func Test_RecommendItem(t *testing.T) {
 	collection := "rec_test2"
 	recNum := 10
 	o := Output{}
 	o.Init(collection, recNum)
-	items, err := o.RecommendedItemForUser("u2")
+	items, err := o.RecommendItemForUser("u2")
 	expect(t, err, nil)
 	expect(t, items[0], "i3")
 }
