@@ -55,7 +55,7 @@ func main() {
 		recNum := 10
 		o := gocommend.Output{}
 		o.Init(collection, recNum)
-		rs, err := o.SimilarItemForUser(userId)
+		rs, err := o.RecommendItemForUser(userId)
 		if err != nil {
 			log.Println(err)
 			return
@@ -68,7 +68,7 @@ func main() {
 		recNum := 10
 		o := gocommend.Output{}
 		o.Init(collection, recNum)
-		rs, err := o.SimilarItemForItem(itemId)
+		rs, err := o.RecommendItemForItem(itemId)
 		if err != nil {
 			log.Println(err)
 			return
