@@ -3,6 +3,8 @@ package gocommend
 import (
 	"reflect"
 	"testing"
+
+	"github.com/garyburd/redigo/redis"
 )
 
 func expect(t *testing.T, a interface{}, b interface{}) {
@@ -15,6 +17,13 @@ func refute(t *testing.T, a interface{}, b interface{}) {
 	if a == b {
 		t.Errorf("Did not expect %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
 	}
+}
+
+func Test_redisTest(t *testing.T) {
+	redisClient.Do("SET", "aaa", 123)
+	a, err := redis.Int(redisClient.Do("GET", "aaa"))
+	expect(t, err, nil)
+	expect(t, a, 123)
 }
 
 func Test_importPoll(t *testing.T) {
