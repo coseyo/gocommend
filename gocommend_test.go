@@ -19,7 +19,7 @@ func refute(t *testing.T, a interface{}, b interface{}) {
 	}
 }
 
-func Test_redisTest(t *testing.T) {
+func Test_redis(t *testing.T) {
 	redisClient.Do("SET", "aaa", 123)
 	a, err := redis.Int(redisClient.Do("GET", "aaa"))
 	expect(t, err, nil)
