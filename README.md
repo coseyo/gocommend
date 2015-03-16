@@ -2,6 +2,8 @@ gocommend
 ===========
 recommend system for golang.
 
+[![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
+
 Developing...
 
 ## CLI example code below
