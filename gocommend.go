@@ -12,10 +12,10 @@ var (
 )
 
 func init() {
-	if localStartup == true {
-		redisClient, err = redis.Dial("tcp", localRedisURL+":"+localRedisPort)
+	if LOCAL_STARTUP == true {
+		redisClient, err = redis.Dial("tcp", LOCAL_REDIS_HOST+":"+LOCAL_REDIS_PORT)
 	} else {
-		redisClient, err = redis.Dial("tcp", remoteRedisURL+":"+remoteRedisPort)
+		redisClient, err = redis.Dial("tcp", REMOTE_REDIS_HOST+":"+REMOTE_REDIS_PORT)
 	}
 	if err != nil {
 		log.Println(err.Error())

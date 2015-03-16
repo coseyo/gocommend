@@ -14,13 +14,13 @@ const (
 
 	MAX_SIMILARITY_USER = 100
 
-	localRedisURL = "192.168.1.7"
+	LOCAL_REDIS_HOST = "192.168.1.7"
 
-	localRedisPort = "6379"
+	LOCAL_REDIS_PORT = "6379"
 
-	remoteRedisURL = "10.20.187.251"
+	REMOTE_REDIS_HOST = "10.20.187.251"
 
-	remoteRedisPort = "11311"
+	REMOTE_REDIS_PORT = "11311"
 
-	localStartup = false
+	LOCAL_STARTUP = false
 )
